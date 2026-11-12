@@ -21,7 +21,7 @@ A mod is a 64-bit Windows DLL that exports one C function. C++ is what the exist
 
 - **To build:** [llvm-mingw](https://github.com/mstorsjo/llvm-mingw/releases) and CMake (Linux or Windows; every mod here uses it), or Visual Studio
   with CMake. The game's memory is read with `__try`/`__except`, so llvm-mingw needs `-fms-extensions`; GCC-based MinGW won't do.
-- **To test:** Forza Horizon 3 (the Xbox One build, 1.0.125.0) through Azimuth, with the platform installed (`DWrite.dll` and `d3dcompiler_47.dll`
+- **To test:** Forza Horizon 3 (the Xbox One build, 1.0.125.0) through Azimuth, with the platform installed (`DINPUT8.dll`
   next to `azimuth.exe`). File, text and database changes go to the game's `mediaoverride` folder, which Extra Options makes the game read; without
   Extra Options the platform does it itself.
 
@@ -233,7 +233,7 @@ need (`FH3 Mod Platform 1.0.0 or newer`) and what your ini keys do.
 
 ## Etiquette
 
-- **Don't proxy DLLs yourself.** `DWrite.dll` and `d3dcompiler_47.dll` are the platform's, `winmm.dll` is Extra Options'.
+- **Don't proxy DLLs yourself.** `DINPUT8.dll` is the platform's (it shipped as `DWrite.dll` and `d3dcompiler_47.dll` before 1.3.0), `winmm.dll` is Extra Options'.
 - **Hook through the platform.** Your own MinHook or byte patches can't see other mods' hooks, and the platform can't warn about clashes.
 - **Don't write into the game's own files.** Use `set_file`, `add_sql` and `add_string_key`, so removing your mod puts everything back.
 - **Make features switchable**, and undo what a switched-off feature did.

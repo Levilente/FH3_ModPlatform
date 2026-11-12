@@ -2,8 +2,12 @@
 
 ## 1.3.0
 
-- **Shares an Azimuth folder with the FH2 platform.** Azimuth 1.0.3 and later import only `DWrite.dll` of the platform's two names, so the FH2 platform and this one could not both be there. The platform now also ships as **`DINPUT8.dll`** (every Azimuth imports it; it forwards `DirectInput8Create` and the rest to the real one). Put `DINPUT8.dll` next to the FH2 platform's `DWrite.dll`: both load, each loads the mods of its own game (`fh3-mods` here, `fh2-mods` there) and leaves the other game alone. `platform.log` names the other platform when it finds one.
-- The platform no longer shows up as one of the FH2 platform's own copies: its restart entry point is now `FH3RestartHelper` (it was `RestartHelper`, which the FH2 platform looks for to decide which copy runs), and the copies of this platform recognise each other by `fh3mod_platform_version` only. Don't mix 1.3.0 with an older FH3 platform copy in one folder.
+**Requirements:** Forza Horizon 3 on PC through Azimuth (tested with 1.0.4), the Xbox One exe of 5 Jun 2018. Extra Options (`winmm.dll`) is optional; 0.6.0 is tested. Azimuth must load a `DINPUT8.dll` from its own folder (it does by default; another tool's `DINPUT8.dll` there can't share the name).
+
+**Install:** copy `DINPUT8.dll` next to `azimuth.exe`. **Updating from 1.2.x or older: delete `DWrite.dll` and `d3dcompiler_47.dll` first**, or the old copy keeps running (`platform.log` says so).
+
+- **The platform is now `DINPUT8.dll`, one file** (it was `DWrite.dll` and `d3dcompiler_47.dll`). Every Azimuth imports DINPUT8.dll; the platform forwards `DirectInput8Create` and the rest to the real one. The reason: Azimuth 1.0.3 and later import only one of the old two names, `DWrite.dll`, which is also the FH2 platform's, so the FH2 and FH3 platforms could not share an Azimuth folder. Now they can: leave the FH2 platform's `DWrite.dll` and add `DINPUT8.dll`; each loads the mods of its own game (`fh3-mods` / `fh2-mods`) and leaves the other game alone. `platform.log` names the other platform when it finds one.
+- The platform no longer shows up as one of the FH2 platform's own copies: its restart entry point is `FH3RestartHelper` (it was `RestartHelper`, which the FH2 platform looks for), and an older FH3 copy still in the folder (1.2.x or older) runs instead of this one, with a line in `platform.log` and `platform-standby.log`.
 
 ## 1.2.1
 

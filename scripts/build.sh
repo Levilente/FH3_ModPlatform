@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # Cross-compiles the FH3 Mod Platform with llvm-mingw and stages dist/:
-#   dist/d3dcompiler_47.dll      the platform (next to azimuth.exe)
-#   dist/DWrite.dll              the same file, for Azimuth 1.0.1 and later
-#   dist/DINPUT8.dll             the same file, for a folder where the FH2 platform is DWrite.dll
+#   dist/DINPUT8.dll             the platform (next to azimuth.exe; every Azimuth imports DINPUT8.dll)
 #   dist/examples/HelloMod.dll   the example mod (not for players)
 #   dist/include/fh3mod.h        the API header
 #   dist/include/fh3game.h       names for the game addresses mods use
@@ -15,7 +13,7 @@ cmake -S "$root" -B "$root/build" -DCMAKE_TOOLCHAIN_FILE="$root/cmake/mingw-w64-
 cmake --build "$root/build" -j "${JOBS:-$(nproc)}"
 rm -rf "$root/dist"
 mkdir -p "$root/dist/examples" "$root/dist/include"
-cp "$root/build/d3dcompiler_47.dll" "$root/build/DWrite.dll" "$root/build/DINPUT8.dll" "$root/dist/"
+cp "$root/build/DINPUT8.dll" "$root/dist/"
 cp "$root/build/HelloMod.dll" "$root/dist/examples/"
 mkdir -p "$root/dist/tools"
 cp "$root/build/fh3mod.exe" "$root/dist/tools/"

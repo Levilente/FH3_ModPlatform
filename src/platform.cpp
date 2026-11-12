@@ -164,6 +164,10 @@ std::string version_string(HMODULE mod) {
 
 uint32_t packed_version() { return PLATFORM_V1 << 16 | PLATFORM_V2 << 8 | PLATFORM_V3; }
 
+// Copies before 1.3.0 look for each other by RestartHelper, which this one no longer exports (the FH2
+// platform looks for it too), so they can't see this copy and can't stand down for it.
+constexpr uint32_t kSeesOthers = 1u << 16 | 3u << 8 | 0u;
+
 struct Copy {
     HMODULE mod;
     std::wstring file; // file name
@@ -261,7 +265,7 @@ bool this_copy_runs() {
         const Copy* best  = nullptr;
         const Copy* older = nullptr;
         for (const auto& c : copies) {
-            if (!c.version) {
+            if (c.version < kSeesOthers) {
                 if (!older) older = &c;
             } else if (!best || c.version > best->version ||
                        (c.version == best->version &&
@@ -273,8 +277,8 @@ bool this_copy_runs() {
             run = false;
             note_standing_down(tag, "FH3 Mod Platform " FH3MOD_PLATFORM_VERSION " (" + narrow(g_self_name) +
                                         ") stood down: " + describe(*older) +
-                                        " is older and can't stand down itself, so it loads the mods. Replace it "
-                                        "with a copy of " + narrow(g_self_name) + ", or delete it.");
+                                        " is older and can't stand down itself, so it loads the mods. Delete it "
+                                        "(the platform is " + narrow(g_self_name) + " now) to run this one.");
         } else if (best && best->mod != g_self) {
             run = false; // the copy that runs names this one in platform.log
         } else {

@@ -5,8 +5,8 @@ A mod loader for **Forza Horizon 3** (the Xbox One build on PC, run through the 
 It is a fork of Trinculo54's [FH2 Mod Platform](https://github.com/Trinculo54/fh2-mod-platform) (MIT), brought to
 Forza Horizon 3's code and menus.
 
-The platform is one DLL (`DWrite.dll`, also shipped as `d3dcompiler_47.dll`) next to `azimuth.exe`. Azimuth loads it
-on start, and it loads every mod DLL in the `fh3-mods` folder.
+The platform is one DLL, **`DINPUT8.dll`**, next to `azimuth.exe`. Azimuth loads it on start (every Azimuth version imports DINPUT8.dll),
+and it loads every mod DLL in the `fh3-mods` folder.
 
 ![The MODS tile on the Home tab, with Exit to Desktop](docs/images/mods-tile-home.jpg)
 ![The MODS tab: Installed mods, Updates, About, All settings (Get Mods is a placeholder)](docs/images/mods-hub.jpg)
@@ -60,22 +60,28 @@ It can share an Azimuth folder with the FH2 platform (see [Next to the FH2 platf
 ## Installation
 
 1. Close the game.
-2. Download the latest zip from the [releases page](../../releases/latest) and copy `DWrite.dll` and `d3dcompiler_47.dll` next to `azimuth.exe`
-   (Azimuth 1.0.1 and later load `DWrite.dll`, older ones `d3dcompiler_47.dll`; having both is fine).
-3. Make a folder called `fh3-mods` next to them (the platform makes it on first start) and put mod DLLs in it.
-4. Start the game. The title of the platform and its version are in `fh3-mods\platform.log`; in the game, **Home > MODS** opens the mods' pages.
+2. Download the latest zip from the [releases page](../../releases/latest) and copy **`DINPUT8.dll`** next to `azimuth.exe`.
+3. Make a folder called `fh3-mods` next to it (the platform makes it on first start) and put mod DLLs in it.
+4. Start the game. The title of the platform and its version are in `fh3-mods\platform.log` ("loaded as DINPUT8.dll"); in the game, **Home > MODS** opens the mods' pages.
 
 Mods built on the platform ship it in their own zips, so most players never need to look for it here.
 
+### Requirements
+
+- Forza Horizon 3 on PC through **Azimuth** (tested with Azimuth 1.0.4), the Xbox One build `forza_durango_release_final.exe` of 5 Jun 2018.
+- Azimuth must load a `DINPUT8.dll` from its own folder, which it does by default. If another tool's `DINPUT8.dll` (a controller or input tool, say) is already there, the two can't share the name: tell me in an issue, and until then keep the other tool out of that folder.
+- Extra Options (`winmm.dll`) is optional; the platform works with and without it, and 0.6.0 is tested.
+
+### Updating from 1.2.x or older
+
+Earlier versions were `DWrite.dll` and `d3dcompiler_47.dll`. **Delete both**, then copy the new `DINPUT8.dll`. If one of them is left, it runs (an older copy can't stand down for the new one), `platform.log` says so, and nothing of the new version is used.
+Some mods' own zips still carry the old two files: don't copy them over the new setup.
+
 ### Next to the FH2 platform
 
-Azimuth 1.0.3 and later import only one of the platform's names, `DWrite.dll`, so two platforms can't both be `DWrite.dll`. Every Azimuth also imports `DINPUT8.dll`, and the same platform file ships under that name too. If the FH2 platform (or FH2MP) is `DWrite.dll` in your folder:
-
-1. Leave its `DWrite.dll` where it is.
-2. Copy only **`DINPUT8.dll`** from the zip next to `azimuth.exe` (not `DWrite.dll`, and not `d3dcompiler_47.dll`).
-3. Start the game. `fh3-mods\platform.log` says "loaded as DINPUT8.dll" and, when Forza Horizon 3 starts, the FH3 mods load; the FH2 platform loads `fh2-mods` for Forza Horizon 2. Each platform leaves the other's game alone.
-
-Another program's own `DINPUT8.dll` in that folder (some controller tools) can't be there at the same time; use `DWrite.dll` then, if it's free.
+The FH2 platform (and FH2MP) is `DWrite.dll`, and this one is `DINPUT8.dll`, so they share a folder: leave the FH2 platform's `DWrite.dll` where it is and add `DINPUT8.dll`.
+Both run in every game launch, each only for its own game: the FH3 platform loads `fh3-mods` when Forza Horizon 3 starts and leaves every other game alone, and the FH2 platform loads `fh2-mods` for Forza Horizon 2.
+`platform.log` names the other platform when it finds one.
 
 ### Settings of the built-in features
 
@@ -94,7 +100,7 @@ Restart the game after editing an ini by hand.
 
 ## Uninstalling
 
-Delete `DWrite.dll` and `d3dcompiler_47.dll` (and the `fh3-mods` folder). The platform changes no game file on disk: everything
+Delete `DINPUT8.dll` (and the `fh3-mods` folder). The platform changes no game file on disk: everything
 is done in memory and through the `mediaoverride` folder. Cars you sold stay sold.
 
 If you used a mod that adds garage upgrades, remove *that mod* first, keep the platform, start the game once and open the garage:
@@ -109,7 +115,7 @@ Needs [llvm-mingw](https://github.com/mstorsjo/llvm-mingw/releases) (clang; the 
 ./scripts/build.sh
 ```
 
-`dist/` then holds `DWrite.dll`, `d3dcompiler_47.dll`, the example mod, `fh3mod.exe` and the headers. The version is `VERSION` in `CMakeLists.txt`;
+`dist/` then holds `DINPUT8.dll`, the example mod, `fh3mod.exe` and the headers. The version is `VERSION` in `CMakeLists.txt`;
 a release tag (`vX.Y.Z`) must match it. See [`RELEASING.md`](RELEASING.md).
 
 ## Credits and thanks

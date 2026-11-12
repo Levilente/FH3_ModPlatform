@@ -1,20 +1,17 @@
 FH3 Mod Platform
 ================
 
-The shared base for Forza Horizon 3 (Azimuth) mods. Version 1.0.0, mod API 12. It's one DLL under
-two names: d3dcompiler_47.dll, which Azimuth up to 1.0.1 loads, and
-DWrite.dll, which Azimuth 1.0.1 and later load (1.0.3 loads only this
-one). It loads every mod in the fh3-mods folder next to azimuth.exe and
+The shared base for Forza Horizon 3 (Azimuth) mods. It's one DLL, DINPUT8.dll, which every
+Azimuth loads from its own folder. It loads every mod in the fh3-mods folder next to azimuth.exe and
 gives them game-text edits, game file and database changes, title-screen
 notices, update checks, logging, a way to talk to each other, access to
 the game, and shared hooks into its code.
 
-Players: copy DWrite.dll and d3dcompiler_47.dll next to azimuth.exe (the
-folder of your Forza Horizon 3 install). If the FH2 platform is already
-there as DWrite.dll, copy only DINPUT8.dll instead: both then run, each for
-its own game, then start the game: the MODS
-tile on the Home tab opens the mods' pages. Mods built on the platform
-usually ship it in their own zips too.
+Players: copy DINPUT8.dll next to azimuth.exe (the folder of your Forza Horizon 3 install), then
+start the game: the MODS tile on the Home tab opens the mods' pages. Needs Azimuth (tested with
+1.0.4) and the Xbox One exe of Forza Horizon 3 (5 Jun 2018). Updating from 1.2.x or older: delete
+DWrite.dll and d3dcompiler_47.dll first. It can sit next to the FH2 platform's DWrite.dll: each
+runs only for its own game. Mods built on the platform usually ship it in their own zips too.
 
 Built in: speed and power units of their own (Settings > HUD and
 Gameplay, under Units), SELL CAR in the garage's car menu, the upgrade
@@ -22,9 +19,7 @@ bridge mods use for garage upgrades, and a proper saving screen when
 you Exit to Desktop.
 
 Mod makers: this zip has
-  d3dcompiler_47.dll        the platform, to test with
-  DWrite.dll                the same file, for Azimuth 1.0.1 and later
-  DINPUT8.dll               the same file, for a folder where the FH2 platform is DWrite.dll
+  DINPUT8.dll               the platform, to test with
   include\fh3mod.h          the API (C/C++)
   include\fh3game.h         names for the game addresses mods use
   examples\HelloMod.dll     an example mod; put it in fh3-mods to try it

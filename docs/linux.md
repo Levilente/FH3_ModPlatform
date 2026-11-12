@@ -1,6 +1,6 @@
 # FH2 mods on Linux (Wine and Proton)
 
-> Written for the FH2 platform; untested with FH3. The FH3 platform's own files are `DWrite.dll` and `d3dcompiler_47.dll`, as in the main README.
+> Written for the FH2 platform; untested with FH3. The FH3 platform's file is `DINPUT8.dll` (before 1.3.0: `DWrite.dll` and `d3dcompiler_47.dll`), as in the main README.
 
 > **FH2 notes.** Written for the FH2 platform; the FH3 platform is not tested on Linux yet, but the Azimuth/Wine setup is the same.
 
@@ -20,7 +20,7 @@ WINEDLLOVERRIDES="winmm=n,b"
 
 Without it Extra Options doesn't run. The platform's text, file and database changes reach the game through the `mediaoverride` folder: up to 2.7.2 only Extra Options made the game read it, so none of them showed up. From 2.7.3 the platform mounts the folder itself when Extra Options isn't loaded, so mods' changes still show up; Extra Options' own features (and the menus that come from it) still need the override. From 2.7.1, `fh3-mods\platform.log` says so ("Extra Options isn't running: its winmm.dll is next to azimuth.exe, but Wine is using its own winmm.dll instead"); older versions said nothing, and waited 20 seconds for Extra Options before mods could hook the game.
 
-**2. The platform loads as it is.** With Wine 9.0, the `d3dcompiler_47.dll` next to `azimuth.exe` is used without an override. If `fh3-mods\platform.log` never appears, your Wine or Proton build is using its own copy: add it to the override, `WINEDLLOVERRIDES="winmm,d3dcompiler_47=n,b"`. Azimuth 1.0.3 no longer loads `d3dcompiler_47.dll`; there the platform is the `DWrite.dll` next to `azimuth.exe` (platform 2.7.4 and newer), and Wine has its own `dwrite.dll` too. If `platform.log` never appears on 1.0.3, use `WINEDLLOVERRIDES="winmm,dwrite=n,b"`.
+**2. The platform loads as it is.** With Wine 9.0, the `DINPUT8.dll` next to `azimuth.exe` needs the override `dinput8=n,b` (Wine has its own). If `fh3-mods\platform.log` never appears, your Wine or Proton build is using its own copy: add it to the override, `WINEDLLOVERRIDES="winmm,d3dcompiler_47=n,b"`. Azimuth 1.0.3 no longer loads `d3dcompiler_47.dll`; there the platform is the `DWrite.dll` next to `azimuth.exe` (platform 2.7.4 and newer), and Wine has its own `dwrite.dll` too. If `platform.log` never appears on 1.0.3, use `WINEDLLOVERRIDES="winmm,dwrite=n,b"`.
 
 **3. Use platform 2.7.1 or newer.** Up to 2.7.0 the platform changed the game database with Windows' own SQLite (`winsqlite3.dll`), which Wine and Proton don't have. Mods that change the database did nothing on Linux, and `platform.log` said "Windows' SQLite (winsqlite3.dll) isn't available, so database changes are off". Every mod's zip includes the platform, so installing one that ships 2.7.1 or newer updates it. If you're stuck with an older one, this works as well: download the 64-bit DLL zip from [sqlite.org](https://sqlite.org/download.html) ("Precompiled Binaries for Windows"), rename its `sqlite3.dll` to `winsqlite3.dll` and put it in your prefix's `drive_c/windows/system32` folder (for Proton, `steamapps/compatdata/<id>/pfx/drive_c/windows/system32`). Next to `azimuth.exe` doesn't work.
 
@@ -36,7 +36,7 @@ Without it Extra Options doesn't run. The platform's text, file and database cha
 
 ## When something doesn't work
 
-- **There's no `fh3-mods\platform.log`.** The platform didn't load: add `d3dcompiler_47` (on Azimuth 1.0.3, `dwrite`) to the override (step 2).
+- **There's no `fh3-mods\platform.log`.** The platform didn't load: add `dinput8` to the override (step 2).
 - **`platform.log` is there, but there's no MODS tile and no changed text.** With platform 2.7.2 or older, Extra Options isn't running: check the `winmm` override (step 1), or update the platform. From 2.7.3 look for "media overrides:" lines in `platform.log`. From 2.7.1 `platform.log` says "Extra Options isn't running" when Wine is the reason. `FH3_ExtraOptions.log` next to `azimuth.exe` is rewritten every time Extra Options starts, so an old date on it means it didn't.
 - **`platform.log` says database changes are off.** The platform is older than 2.7.1 (step 3).
 - Crash reports go to `fh3-mods\crashes` as on Windows. Paths in logs start with `Z:\`, which is your Linux root, `/`.
