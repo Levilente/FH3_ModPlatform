@@ -10,7 +10,9 @@ notices, update checks, logging, a way to talk to each other, access to
 the game, and shared hooks into its code.
 
 Players: copy DWrite.dll and d3dcompiler_47.dll next to azimuth.exe (the
-folder of your Forza Horizon 3 install), then start the game: the MODS
+folder of your Forza Horizon 3 install). If the FH2 platform is already
+there as DWrite.dll, copy only DINPUT8.dll instead: both then run, each for
+its own game, then start the game: the MODS
 tile on the Home tab opens the mods' pages. Mods built on the platform
 usually ship it in their own zips too.
 
@@ -22,6 +24,7 @@ you Exit to Desktop.
 Mod makers: this zip has
   d3dcompiler_47.dll        the platform, to test with
   DWrite.dll                the same file, for Azimuth 1.0.1 and later
+  DINPUT8.dll               the same file, for a folder where the FH2 platform is DWrite.dll
   include\fh3mod.h          the API (C/C++)
   include\fh3game.h         names for the game addresses mods use
   examples\HelloMod.dll     an example mod; put it in fh3-mods to try it

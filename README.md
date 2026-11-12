@@ -55,7 +55,7 @@ on start, and it loads every mod DLL in the `fh3-mods` folder.
 | Windows 10/11, or Linux under Wine | the platform needs nothing extra; [Wine notes](docs/linux.md) (written for FH2, not tested on FH3 yet) |
 
 The platform recognises the game by its exe header, so it does nothing (and says so in the log) for any other game or build.
-Use it in an Azimuth folder of its own; it is not meant to share one with the FH2 platform (one `DWrite.dll` per folder).
+It can share an Azimuth folder with the FH2 platform (see [Next to the FH2 platform](#next-to-the-fh2-platform)): each one only acts in its own game and has its own mods folder.
 
 ## Installation
 
@@ -66,6 +66,16 @@ Use it in an Azimuth folder of its own; it is not meant to share one with the FH
 4. Start the game. The title of the platform and its version are in `fh3-mods\platform.log`; in the game, **Home > MODS** opens the mods' pages.
 
 Mods built on the platform ship it in their own zips, so most players never need to look for it here.
+
+### Next to the FH2 platform
+
+Azimuth 1.0.3 and later import only one of the platform's names, `DWrite.dll`, so two platforms can't both be `DWrite.dll`. Every Azimuth also imports `DINPUT8.dll`, and the same platform file ships under that name too. If the FH2 platform (or FH2MP) is `DWrite.dll` in your folder:
+
+1. Leave its `DWrite.dll` where it is.
+2. Copy only **`DINPUT8.dll`** from the zip next to `azimuth.exe` (not `DWrite.dll`, and not `d3dcompiler_47.dll`).
+3. Start the game. `fh3-mods\platform.log` says "loaded as DINPUT8.dll" and, when Forza Horizon 3 starts, the FH3 mods load; the FH2 platform loads `fh2-mods` for Forza Horizon 2. Each platform leaves the other's game alone.
+
+Another program's own `DINPUT8.dll` in that folder (some controller tools) can't be there at the same time; use `DWrite.dll` then, if it's free.
 
 ### Settings of the built-in features
 

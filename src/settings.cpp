@@ -2998,7 +2998,7 @@ int chosen_item(void* popup) {
 // ---- restarting the game ------------------------------------------------------------------
 // "Restart now" writes fh3-mods\platform-restart.txt (this process's id, azimuth.exe's path,
 // its arguments with --skip-launcher added, its folder), starts
-// `rundll32 d3dcompiler_47.dll,RestartHelper`, and closes the game window as its X button
+// `rundll32 d3dcompiler_47.dll,FH3RestartHelper`, and closes the game window as its X button
 // would, so Azimuth shuts down the way it always does. The helper (below, outside the
 // namespace) waits for this process to end and starts Azimuth again; if it hasn't ended
 // within two minutes, the quit was cancelled and the helper gives up.
@@ -3034,7 +3034,7 @@ bool restart_game() {
     } else {
         return false;
     }
-    std::wstring cmd = L"rundll32.exe \"" + std::wstring(self) + L"\",RestartHelper";
+    std::wstring cmd = L"rundll32.exe \"" + std::wstring(self) + L"\",FH3RestartHelper";
     STARTUPINFOW si{};
     si.cb = sizeof si;
     PROCESS_INFORMATION pi{};
@@ -5046,12 +5046,12 @@ bool show_message_popup(void* page, const std::wstring& title, const std::wstrin
 
 } // namespace fh3platform
 
-// rundll32 d3dcompiler_47.dll,RestartHelper: see restart_game.
-extern "C" __declspec(dllexport) void CALLBACK RestartHelper(HWND, HINSTANCE, LPSTR, int) {
+// rundll32 d3dcompiler_47.dll,FH3RestartHelper: see restart_game.
+extern "C" __declspec(dllexport) void CALLBACK FH3RestartHelper(HWND, HINSTANCE, LPSTR, int) {
     HMODULE self = nullptr;
     wchar_t path[MAX_PATH];
     GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                       reinterpret_cast<LPCWSTR>(&RestartHelper), &self);
+                       reinterpret_cast<LPCWSTR>(&FH3RestartHelper), &self);
     if (!self || !GetModuleFileNameW(self, path, MAX_PATH)) return;
     std::wstring file = path;
     file.erase(file.find_last_of(L"\\/") + 1);

@@ -1,6 +1,7 @@
-; Forward every export of d3dcompiler_47.dll and DWrite.dll to the real system DLLs.
-; Azimuth up to 1.0.1 imports D3DCompile, and 1.0.1 and later import DWriteCreateFactory:
-; the same DLL ships under both names. Only the last two exports are ours.
+; Forward every export of d3dcompiler_47.dll, DWrite.dll and DINPUT8.dll to the real system DLLs.
+; Azimuth up to 1.0.1 imports D3DCompile, 1.0.1 and later import DWriteCreateFactory and every
+; version imports DINPUT8.dll: the same DLL ships under all three names (DINPUT8.dll is for a
+; folder where the FH2 platform already is DWrite.dll). The last two exports are ours.
 LIBRARY d3dcompiler_47
 EXPORTS
     D3DAssemble                       = C:\Windows\System32\d3dcompiler_47.D3DAssemble
@@ -33,7 +34,12 @@ EXPORTS
     D3DWriteBlobToFile                = C:\Windows\System32\d3dcompiler_47.D3DWriteBlobToFile
     DebugSetMute                      = C:\Windows\System32\d3dcompiler_47.DebugSetMute
     DWriteCreateFactory               = C:\Windows\System32\DWrite.DWriteCreateFactory
-    ; ours: rundll32 d3dcompiler_47.dll,RestartHelper (settings.cpp)
-    RestartHelper
+    DirectInput8Create                = C:\Windows\System32\DINPUT8.DirectInput8Create
+    DllCanUnloadNow                   = C:\Windows\System32\DINPUT8.DllCanUnloadNow
+    DllGetClassObject                 = C:\Windows\System32\DINPUT8.DllGetClassObject
+    DllRegisterServer                 = C:\Windows\System32\DINPUT8.DllRegisterServer
+    DllUnregisterServer               = C:\Windows\System32\DINPUT8.DllUnregisterServer
+    ; ours: rundll32 d3dcompiler_47.dll,FH3RestartHelper (settings.cpp)
+    FH3RestartHelper
     ; ours: which copy of the platform runs when Azimuth loads two (platform.cpp)
     fh3mod_platform_version

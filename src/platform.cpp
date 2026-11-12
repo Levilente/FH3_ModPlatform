@@ -79,7 +79,7 @@ FILE* g_log_copy = nullptr; // fh3-mods\platform-logs\platform-<session id>.log
 FH3ModApi g_api{};
 
 HMODULE g_self = nullptr; // this copy of the platform
-std::wstring g_self_name; // its file name: d3dcompiler_47.dll or DWrite.dll
+std::wstring g_self_name; // its file name: d3dcompiler_47.dll, DWrite.dll or DINPUT8.dll
 std::string g_copies;     // the other copies in this process, for platform.log
 
 } // namespace
@@ -156,9 +156,9 @@ std::string version_string(HMODULE mod) {
 // Azimuth 1.0.3 no longer imports d3dcompiler_47.dll, so the platform also ships as DWrite.dll,
 // which Azimuth imports from 1.0.1 on. Azimuth 1.0.1 imports both, so two copies can start in one
 // process, or one copy and an older d3dcompiler_47.dll from another mod's zip, and only one may
-// load the mods. Every platform since 2.3.0 exports RestartHelper; copies that take part in this
-// also export fh3mod_platform_version. An older copy runs whatever happens, so then the newer
-// ones stand down; otherwise the newest copy runs, DWrite.dll on a tie. Each copy decides on its
+// load the mods. The copies that take part in this export fh3mod_platform_version (the FH2
+// platform and other proxies don't, so they are not part of it: see foreign_platforms). The
+// newest copy runs, DWrite.dll before DINPUT8.dll before d3dcompiler_47.dll on a tie. Each copy decides on its
 // own thread, which only starts once the loader has started every DLL Azimuth imports, under a
 // mutex; the copy that runs leaves an event behind, so a copy loaded later stands down too.
 
@@ -175,7 +175,11 @@ std::string describe(const Copy& c) {
     return narrow(c.file) + " (FH3 Mod Platform" + (v.empty() ? "" : " " + v) + ")";
 }
 
-bool is_dwrite(const Copy& c) { return lower_w(c.file) == L"dwrite.dll"; }
+// The name a tie goes by: DWrite.dll, then DINPUT8.dll, then d3dcompiler_47.dll.
+int name_rank(const Copy& c) {
+    const std::wstring l = lower_w(c.file);
+    return l == L"dwrite.dll" ? 2 : l == L"dinput8.dll" ? 1 : 0;
+}
 
 // The two names the platform ships under, spelt as shipped. Windows names a DLL loaded as an
 // import the way the importer spells it, and Azimuth asks for D3DCOMPILER_47.dll.
@@ -183,6 +187,7 @@ std::wstring shipped_name(const std::wstring& file) {
     const std::wstring l = lower_w(file);
     if (l == L"d3dcompiler_47.dll") return L"d3dcompiler_47.dll";
     if (l == L"dwrite.dll") return L"DWrite.dll";
+    if (l == L"dinput8.dll") return L"DINPUT8.dll";
     return file;
 }
 
@@ -194,14 +199,36 @@ std::vector<Copy> platform_copies() {
     if (!K32EnumProcessModules(GetCurrentProcess(), mods, sizeof mods, &need)) return out;
     const DWORD count = std::min<DWORD>(need / sizeof(HMODULE), 1024);
     for (DWORD i = 0; i < count; ++i) {
-        if (!GetProcAddress(mods[i], "RestartHelper")) continue;
+        if (!GetProcAddress(mods[i], "fh3mod_platform_version")) continue;
         wchar_t path[MAX_PATH];
         const DWORD n = GetModuleFileNameW(mods[i], path, MAX_PATH);
         if (!n || n >= MAX_PATH) continue;
         const fs::path p{path};
         if (lower_w(p.parent_path().wstring()) != lower_w(g_azimuth.wstring())) continue;
         const auto version = reinterpret_cast<uint32_t (*)()>(GetProcAddress(mods[i], "fh3mod_platform_version"));
-        out.push_back({mods[i], shipped_name(p.filename().wstring()), version ? version() : 0});
+        out.push_back({mods[i], shipped_name(p.filename().wstring()), version()});
+    }
+    return out;
+}
+
+// Another platform (the FH2 platform, say) loaded from Azimuth's folder next to this one: it has
+// its own mods folder and acts only in its own game, so the two run side by side. Named in
+// platform.log, to tell a player what is going on.
+std::string foreign_platforms() {
+    std::string out;
+    HMODULE mods[1024];
+    DWORD need = 0;
+    if (!K32EnumProcessModules(GetCurrentProcess(), mods, sizeof mods, &need)) return out;
+    const DWORD count = std::min<DWORD>(need / sizeof(HMODULE), 1024);
+    for (DWORD i = 0; i < count; ++i) {
+        if (mods[i] == g_self || GetProcAddress(mods[i], "fh3mod_platform_version") || !GetProcAddress(mods[i], "RestartHelper")) continue;
+        wchar_t path[MAX_PATH];
+        const DWORD n = GetModuleFileNameW(mods[i], path, MAX_PATH);
+        if (!n || n >= MAX_PATH) continue;
+        const fs::path p{path};
+        if (lower_w(p.parent_path().wstring()) != lower_w(g_azimuth.wstring())) continue;
+        const std::string v = version_string(mods[i]);
+        out += (out.empty() ? "" : ", ") + narrow(p.filename().wstring()) + (v.empty() ? "" : " " + v);
     }
     return out;
 }
@@ -238,7 +265,7 @@ bool this_copy_runs() {
                 if (!older) older = &c;
             } else if (!best || c.version > best->version ||
                        (c.version == best->version &&
-                        (is_dwrite(c) > is_dwrite(*best) || (is_dwrite(c) == is_dwrite(*best) && c.mod < best->mod)))) {
+                        (name_rank(c) > name_rank(*best) || (name_rank(c) == name_rank(*best) && c.mod < best->mod)))) {
                 best = &c;
             }
         }
@@ -1083,6 +1110,9 @@ DWORD WINAPI load_mods(LPVOID) {
     plog(std::string("FH3 Mod Platform ") + FH3MOD_PLATFORM_VERSION + " (API " + std::to_string(FH3MOD_API_VERSION) +
          ") in " + narrow(g_azimuth.wstring()));
     plog("loaded as " + narrow(g_self_name) + (g_copies.empty() ? "" : "; " + g_copies));
+    if (const std::string other = foreign_platforms(); !other.empty())
+        plog("another mod platform is loaded next to this one: " + other + ". They don't share anything: each loads the mods of its own "
+             "game folder (fh3-mods here) and leaves the other games alone");
     plog(session_line());
     plog(std::string("detailed log ") + (log_verbose() ? "on" : "off") + " (fh3-mods\\platform.ini [log] Verbose)");
     plog(g_game.empty() ? "couldn't find the game's Mount folder; game text, file and database changes are off"

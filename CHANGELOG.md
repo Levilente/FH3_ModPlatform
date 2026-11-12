@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0
+
+- **Shares an Azimuth folder with the FH2 platform.** Azimuth 1.0.3 and later import only `DWrite.dll` of the platform's two names, so the FH2 platform and this one could not both be there. The platform now also ships as **`DINPUT8.dll`** (every Azimuth imports it; it forwards `DirectInput8Create` and the rest to the real one). Put `DINPUT8.dll` next to the FH2 platform's `DWrite.dll`: both load, each loads the mods of its own game (`fh3-mods` here, `fh2-mods` there) and leaves the other game alone. `platform.log` names the other platform when it finds one.
+- The platform no longer shows up as one of the FH2 platform's own copies: its restart entry point is now `FH3RestartHelper` (it was `RestartHelper`, which the FH2 platform looks for to decide which copy runs), and the copies of this platform recognise each other by `fh3mod_platform_version` only. Don't mix 1.3.0 with an older FH3 platform copy in one folder.
+
 ## 1.2.1
 
 - **Custom upgrades could be missing after a slow start.** The shop hooks (and the save clean-up that runs through them) started as soon as the first mod registered an upgrade. When a mod listed earlier took long in `fh3mod_init` (a few hundred Livery Decals take about a minute), the mods after it, such as Nitro System II and Universal Wheel Spacers, registered only after the game had loaded the car, and their parts did nothing until the car was changed in the shop. The hooks now wait until every `fh3mod_init` has returned.

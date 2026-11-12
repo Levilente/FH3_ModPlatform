@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 # Bump VERSION before tagging a release (the tag build checks they match).
-project(fh3_mod_platform VERSION 1.2.1 LANGUAGES C CXX RC)
+project(fh3_mod_platform VERSION 1.3.0 LANGUAGES C CXX RC)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -73,10 +73,13 @@ target_include_directories(fh3mod_platform PRIVATE include src ${CMAKE_CURRENT_B
 target_link_libraries(fh3mod_platform PRIVATE user32 setupapi hid)
 set_target_properties(fh3mod_platform PROPERTIES OUTPUT_NAME d3dcompiler_47 PREFIX "")
 # Azimuth 1.0.3 no longer imports d3dcompiler_47.dll, while 1.0.1 and later import DWrite.dll.
-# The DLL forwards both, so the build leaves a copy of it under that name too.
+# The DLL forwards both, so the build leaves a copy of it under that name too. A third name,
+# DINPUT8.dll (every Azimuth imports it), is for a folder where the FH2 platform is DWrite.dll.
 add_custom_command(TARGET fh3mod_platform POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:fh3mod_platform>
-            $<TARGET_FILE_DIR:fh3mod_platform>/DWrite.dll)
+            $<TARGET_FILE_DIR:fh3mod_platform>/DWrite.dll
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:fh3mod_platform>
+            $<TARGET_FILE_DIR:fh3mod_platform>/DINPUT8.dll)
 
 # Only when this is the top-level project: the example mod and the tests.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
