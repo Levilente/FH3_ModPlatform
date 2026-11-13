@@ -399,8 +399,7 @@ struct Shared {
     volatile DWORD gyro_on;
     volatile DWORD xbox_tick; // an XInput pad was last used (the DualSense mod writes ds_tick after it: the later one is in use)
     volatile DWORD ds_tick;
-    volatile DWORD kb_tick;   // the keyboard or the mouse was last used
-    DWORD reserved[6];
+    DWORD reserved[7];
 };
 Shared* g_shared = nullptr;
 
@@ -758,11 +757,6 @@ Virt kb_poll() {
         for (int c = 0; c < KB_COUNT; ++c)
             if (kKb[c].button && kb_down(c)) btn |= kKb[c].button;
     g.buttons = btn;
-    if (in && g_shared &&
-        (btn || g.lt > 64 || g.rt > 64 || std::abs(g.lx) > 11000 || std::abs(g.ly) > 11000 || std::abs(g.rx) > 11000 || std::abs(g.ry) > 11000)) {
-        const DWORD t = GetTickCount();
-        g_shared->kb_tick = t ? t : 1;
-    }
     g.present = true;
     return g;
 }

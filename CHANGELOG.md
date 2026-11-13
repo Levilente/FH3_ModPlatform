@@ -1,9 +1,5 @@
 # Changelog
 
-## 1.3.1
-
-- The platform times the keyboard's and mouse's real use too (shared with the DualSense mod), so the game's button icons can follow the keyboard.
-
 ## 1.3.0
 
 **Requirements:** Forza Horizon 3 on PC through Azimuth (tested with 1.0.4), the Xbox One exe of 5 Jun 2018. Extra Options (`winmm.dll`) is optional; 0.6.0 is tested. Azimuth must load a `DINPUT8.dll` from its own folder (it does by default; another tool's `DINPUT8.dll` there can't share the name).
