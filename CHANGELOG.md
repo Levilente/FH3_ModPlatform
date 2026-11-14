@@ -2,15 +2,10 @@
 
 ## 1.4.2
 
-- ENGINE tab: the tab focus pointed at the visual states instead of the lists, so no tuning tab could be navigated; fixed. The title is ENGINE, in capitals like the others.
+**Requirements:** Forza Horizon 3 on PC through Azimuth (tested with 1.0.4), the Xbox One exe of 5 Jun 2018. Extra Options (`winmm.dll`) is optional; 0.6.0 is tested. Azimuth must load a `DINPUT8.dll` from its own folder (it does by default). Copy `DINPUT8.dll` over the old one.
 
-## 1.4.1
-
-- The ENGINE tab waits for the game to fill in its tuning tab table (it is empty when the game's code is first ready).
-
-## 1.4.0
-
-- API 17: `FH3TuningRow.page = "Engine"` puts a tuning row on a new ENGINE tab of Tune Car (after Differential). The platform adds the tab (a tenth entry in the game's tuning tab table, its own list, description and visual state) when a mod asks for it; older mods and rows without a page stay on Springs.
+- **API 17: the ENGINE tab in Tune Car.** `FH3TuningRow.page = "Engine"` puts a tuning row on a new ENGINE tab (after Differential). The platform adds the tab (a tenth entry in the game's tuning tab table, with its own list, description and visual state) when a mod asks for it; older mods and rows without a page stay at the end of Springs.
+- The tab waits for the game to fill in its tuning tab table, and the tab focus reads the lists, so the tabs can be navigated; the title is ENGINE, in capitals like the others.
 
 ## 1.3.0
 

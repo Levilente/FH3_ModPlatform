@@ -1,6 +1,6 @@
 # API reference
 
-Everything is in [`include/fh3mod.h`](../include/fh3mod.h). This page goes through it member by member. The FH3 Mod Platform 1.2.0 has **API version 16**.
+Everything is in [`include/fh3mod.h`](../include/fh3mod.h). This page goes through it member by member. The FH3 Mod Platform 1.4.2 has **API version 17**.
 
 The platform is a fork of the FH2 Mod Platform, and the API keeps its numbering, so a mod checks `api->api_version` the same way on both. A few parts were written for FH2's menus and files and do nothing in FH3 yet; the table says which.
 
@@ -25,7 +25,7 @@ The platform is a fork of the FH2 Mod Platform, and the API keeps its numbering,
 | Garage upgrades (shop, basket, purchase, per-car stages) | `register_upgrade`, `upgrade_stage`, `upgrade_active_garage`, `upgrade_import` | 11 | yes |
 | Whose car is it (the player's, a loaner, an AI car) | `upgrade_car_model`, `upgrade_garage_for_car`, `upgrade_stage_for_car` | 12, 14 | yes |
 | Shop preview for effects outside the car's data | `upgrade_preview_stage`, `upgrade_shop_serial` | 15 | yes |
-| Slider rows on the car's Tuning > Springs page | `add_tuning_row` | 13 | yes |
+| Slider rows on the car's Tuning page (Springs, or the ENGINE tab with API 17) | `add_tuning_row` | 13 | yes |
 | Swap a rebuilt mod DLL in while the game runs (F9) | `fh3mod_shutdown` (an export), `is_reloading` | 16 | yes |
 | Pages of your own, tiles | `add_page`, `set_page_rows`, `set_page_xaml`, `set_page_tile_text`, ... | 8 | no: return 0 (FH2 menus only) |
 | Title-screen entries | `add_title_entry`, `title_started_by` | 9 | no: return 0 (FH2 menus only) |

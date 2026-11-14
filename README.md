@@ -35,7 +35,7 @@ and it loads every mod DLL in the `fh3-mods` folder.
 
 **For mod makers**
 
-- A C/C++ API (`include/fh3mod.h`, API version 16, documented in [`docs/api.md`](docs/api.md)): game-text edits, game-file overrides, database patches
+- A C/C++ API (`include/fh3mod.h`, API version 17, documented in [`docs/api.md`](docs/api.md)): game-text edits, game-file overrides, database patches
   (`add_sql`), string-table keys for FH3's hashed tables, Mods-page rows (On/Off, sliders, choices), hooks and byte patches, hotkeys, commands
   (`fh3mod.exe`), interfaces between mods, sessions, save snapshots, the **upgrade bridge** (`register_upgrade`) and tuning rows (`add_tuning_row`).
 - **Hot reload** (1.2.0, off by default): with `fh3-mods\platform.ini` `[dev] HotReload=1`, rebuild your mod while the game runs and press **F9**: the platform shuts the old build down (`fh3mod_shutdown`), switches its hooks off and starts the new one, with the rows, hotkeys and upgrades re-bound instead of added twice. No restart for a change to your mod's logic. See [`docs/writing-a-mod.md`](docs/writing-a-mod.md#hot-reload-change-your-mod-without-restarting-the-game).
