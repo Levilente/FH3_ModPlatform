@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.1
+
+- The ENGINE tab waits for the game to fill in its tuning tab table (it is empty when the game's code is first ready).
+
 ## 1.4.0
 
 - API 17: `FH3TuningRow.page = "Engine"` puts a tuning row on a new ENGINE tab of Tune Car (after Differential). The platform adds the tab (a tenth entry in the game's tuning tab table, its own list, description and visual state) when a mod asks for it; older mods and rows without a page stay on Springs.

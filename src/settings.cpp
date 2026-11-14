@@ -4250,14 +4250,27 @@ char* alloc_near_exe(std::size_t size) {
 bool engine_tab_install() {
     char* base = reinterpret_cast<char*>(g_base);
     const char* tabs = base + RVA_TUNE_TABS;
-    // the table must be the one we know: entry 0 = Tires, entry 8 = Differential
-    __try {
-        if (std::strcmp(*reinterpret_cast<const char* const*>(tabs), "VisualState_Tires") != 0 ||
-            std::strcmp(*reinterpret_cast<const char* const*>(tabs + 8 * kTabSize), "VisualState_Differential") != 0) {
+    // the table must be the one we know: entry 0 = Tires, entry 8 = Differential. The game fills it in some time after
+    // start (not with the exe's other statics), so wait for it.
+    auto name_at = [&](int k) -> const char* {
+        const char* n = nullptr;
+        __try { n = *reinterpret_cast<const char* const*>(tabs + k * kTabSize); } __except (EXCEPTION_EXECUTE_HANDLER) { return nullptr; }
+        if (!n) return nullptr;
+        MEMORY_BASIC_INFORMATION mb;
+        if (!VirtualQuery(n, &mb, sizeof mb) || mb.State != MEM_COMMIT) return nullptr;
+        return n;
+    };
+    for (int wait = 0;; ++wait) {
+        const char* a = name_at(0); const char* z = name_at(8);
+        if (a && z) {
+            if (std::strcmp(a, "VisualState_Tires") == 0 && std::strcmp(z, "VisualState_Differential") == 0) break;
             slog("ENGINE tab: the game's tuning tab table isn't the one expected; no ENGINE tab");
             return false;
         }
-    } __except (EXCEPTION_EXECUTE_HANDLER) { slog("ENGINE tab: the tuning tab table can't be read; no ENGINE tab"); return false; }
+        if (wait == 0) slog("ENGINE tab: waiting for the game to fill in its tuning tab table");
+        if (wait > 1200) { slog("ENGINE tab: the tuning tab table stayed empty; no ENGINE tab"); return false; }
+        Sleep(250);
+    }
     char* mem = alloc_near_exe(0x1000);
     if (!mem) { slog("ENGINE tab: no memory near the game; no ENGINE tab"); return false; }
     char* table = mem;
@@ -4398,7 +4411,7 @@ void hook_game_fh3() {
     void* base = g_api->wait_for_code(0xFFFFFFFFu);
     if (!base) return;
     g_base = reinterpret_cast<uintptr_t>(base);
-    if (g_engine_tab.load()) engine_tab_install();
+    if (g_engine_tab.load()) std::thread([] { engine_tab_install(); }).detach();
     struct Check {
         uintptr_t rva;
         std::vector<uint8_t> bytes;
