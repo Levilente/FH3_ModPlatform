@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.2
+
+- ENGINE tab: the tab focus pointed at the visual states instead of the lists, so no tuning tab could be navigated; fixed. The title is ENGINE, in capitals like the others.
+
 ## 1.4.1
 
 - The ENGINE tab waits for the game to fill in its tuning tab table (it is empty when the game's code is first ready).
