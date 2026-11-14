@@ -4297,7 +4297,7 @@ bool engine_tab_install() {
     };
     const unsigned char count_old[5] = { 0xBE, 0x09, 0x00, 0x00, 0x00 }, count_new[5] = { 0xBE, 0x0A, 0x00, 0x00, 0x00 };
     bool ok = rel(RVA_TUNE_SWITCH_LEA, table, 0x8D, 0x35, "Tuning: tab switch -> 10 tabs") &&
-              rel(RVA_TUNE_FOCUS_LEA, table + 8, 0x8D, 0x05, "Tuning: tab focus -> 10 tabs")   // it reads the list names: the table + 8 &&
+              rel(RVA_TUNE_FOCUS_LEA, table + 8, 0x8D, 0x05, "Tuning: tab focus -> 10 tabs") &&   // it reads the list names: the table + 8
               rel(RVA_TUNE_CTOR_LEA, table + 0x50, 0x8D, 0x3D, "Tuning: tab titles -> 10 tabs");
     if (ok) {
         FH3Hook* h = g_api->patch_bytes(&g_owner_mod, "Tuning: 10 tab titles", base + RVA_TUNE_CTOR_COUNT, count_old, count_new, 5);
