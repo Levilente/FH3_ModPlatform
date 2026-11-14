@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#define FH3MOD_API_VERSION 16
+#define FH3MOD_API_VERSION 17
 
 #ifdef __cplusplus
 #define FH3MOD_EXPORT extern "C" __declspec(dllexport)
@@ -645,6 +645,10 @@ struct FH3TuningRow {
     void (*set)(void* user, float value);   /* the player moved the slider (already on a step, inside the range) */
     int (*visible)(void* user);    /* 1 = show the row for the car being tuned, 0 = hide it; may be NULL (always shown) */
     void* user;                    /* passed to every callback */
+
+    /* ---- API 17 (platform 1.4.0) ---- */
+    const char* page;              /* the tab the row is on: "Engine" = a tab of its own, ENGINE, after Differential
+                                      (the platform adds it when a row asks for it); NULL = the end of Springs */
 };
 
 #define FH3_TABLE_UPGRADES 0x968719E9u      /* Upgrades.str: Upgrades.Name / Description */

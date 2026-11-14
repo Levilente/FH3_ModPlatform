@@ -1346,6 +1346,7 @@ DWORD WINAPI load_mods(LPVOID) {
         g_dirty.insert("main.str");
         g_table_names.emplace("main.str", "Main.str");
     }
+    if (FH3Mod* em = settings_engine_row_mod()) api_add_string_key(em, "Tuning.str", 0x4E47454Eu, L"Engine");   // the ENGINE tab's title (API 17)
     apply_all();
     build_database();
     settings_start(&g_api);

@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.0
+
+- API 17: `FH3TuningRow.page = "Engine"` puts a tuning row on a new ENGINE tab of Tune Car (after Differential). The platform adds the tab (a tenth entry in the game's tuning tab table, its own list, description and visual state) when a mod asks for it; older mods and rows without a page stay on Springs.
+
 ## 1.3.0
 
 **Requirements:** Forza Horizon 3 on PC through Azimuth (tested with 1.0.4), the Xbox One exe of 5 Jun 2018. Extra Options (`winmm.dll`) is optional; 0.6.0 is tested. Azimuth must load a `DINPUT8.dll` from its own folder (it does by default; another tool's `DINPUT8.dll` there can't share the name).

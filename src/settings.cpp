@@ -857,6 +857,7 @@ struct TuneRow {
     void* user;
     uint8_t* value_desc = nullptr;
     uint8_t* vis_desc   = nullptr;
+    bool engine = false;            // on the ENGINE tab (API 17) instead of Springs
 };
 constexpr std::size_t kMaxTuneRows = 64;   // the descriptor lookup (name_number) accepts up to 64
 std::deque<TuneRow> g_tune_rows;      // guarded by g_mu; rows are never removed
@@ -1881,6 +1882,8 @@ std::string tune_row_xaml(std::size_t i, const TuneRow& r) {
     return x;
 }
 
+std::atomic<bool> g_engine_tab{false};   // the ENGINE tab was written: the game's tab table gets its tenth entry
+
 bool write_tuning_page() {
     std::vector<TuneRow> rows;
     {
@@ -1903,13 +1906,63 @@ bool write_tuning_page() {
         return false;
     }
     std::string res = "            <local:FZBooleanToVisibilityConverter x:Key=\"FH3Mod_TuneShow\" UseHidden=\"false\" InvertResult=\"false\" />\r\n";
-    std::string xaml;
+    std::string xaml, examl;
     for (std::size_t i = 0; i < rows.size(); ++i) {
         res += "            <local:NumUnitConverter x:Key=\"FH3Mod_TuneNum_" + std::to_string(i) + "\" FractionDigits=\"" + std::to_string(rows[i].decimals) + "\" ShowUnit=\"False\" />\r\n";
-        xaml += tune_row_xaml(i, rows[i]);
+        (rows[i].engine ? examl : xaml) += tune_row_xaml(i, rows[i]);
     }
-    page.insert(sp_e, xaml);    // after the Springs list's last row (positions: the list comes before the resources)
-    page.insert(rd_e, res);
+    // The ENGINE tab (API 17): a list of its own after Differential's, its description block, and its visual state; the
+    // game's tab table gets a tenth entry pointing at them (engine_tab_install, once the code is ready).
+    bool engine = false;
+    if (!examl.empty()) {
+        const std::size_t d   = page.find("x:Name=\"StackPanel_9_Differential\"");
+        const std::size_t d_e = d == std::string::npos ? d : page.find("</local:CommonListBox>", d);
+        const std::size_t t   = page.find("x:Name=\"TextBlock_9_Differential\"");
+        const std::size_t t_e = t == std::string::npos ? t : page.find("</local:AutoScrollPanel>", t);
+        const std::size_t v   = page.find("<VisualState x:Name=\"VisualState_Differential\"");
+        const std::size_t v_e = v == std::string::npos ? v : page.find("\n", v);
+        const std::size_t b   = page.find("<Storyboard x:Key=\"A_Storyboard_VisualState_Differential\">");
+        if (d_e != std::string::npos && t_e != std::string::npos && v_e != std::string::npos && b != std::string::npos && d_e > t_e && t_e > v_e && v_e > b) {
+            // (positions, from the end of the page backwards so the earlier ones stand)
+            const std::size_t d_end = d_e + std::strlen("</local:CommonListBox>");
+            page.insert(d_end, "\r\n\r\n                            <local:CommonListBox x:Name=\"StackPanel_10_FH3ModEngine\"\r\n"
+                               "                                                    KeyboardNavigation.DirectionalNavigation=\"Contained\"\r\n"
+                               "                                                    Style=\"{StaticResource A_Style_ListBox_List_Tuning}\"\r\n"
+                               "                                                    ItemContainerStyle=\"{StaticResource A_Style_ListBoxItem_List_Tuning}\">\r\n" +
+                               examl + "                            </local:CommonListBox>");
+            const std::size_t t_end = t_e + std::strlen("</local:AutoScrollPanel>");
+            page.insert(t_end, "\r\n\r\n                                        <local:AutoScrollPanel DataContext=\"{Binding SelectedItem, ElementName=StackPanel_10_FH3ModEngine}\"\r\n"
+                               "                                                                Style=\"{StaticResource A_Style_AutoScrollPanel_Masked_Tuning}\">\r\n"
+                               "                                            <StackPanel>\r\n"
+                               "                                                <local:FZTextBlock x:Name=\"TextBlock_10_FH3ModEngine\"\r\n"
+                               "                                                                    Text=\"{Binding Tag}\"\r\n"
+                               "                                                                    Style=\"{StaticResource A_Style_FZTextBlock_Tuning_DescriptionBlockBody}\" />\r\n"
+                               "                                            </StackPanel>\r\n"
+                               "                                        </local:AutoScrollPanel>");
+            page.insert(v_e + 1, "                <VisualState x:Name=\"VisualState_FH3ModEngine\" Storyboard=\"{StaticResource A_Storyboard_VisualState_FH3ModEngine}\"/>\r\n");
+            page.insert(b, "<Storyboard x:Key=\"A_Storyboard_VisualState_FH3ModEngine\">\r\n"
+                           "                <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty=\"(UIElement.Visibility)\" Storyboard.TargetName=\"StackPanel_10_FH3ModEngine\">\r\n"
+                           "                    <DiscreteObjectKeyFrame KeyTime=\"0\" Value=\"{x:Static Visibility.Visible}\"/>\r\n"
+                           "                </ObjectAnimationUsingKeyFrames>\r\n"
+                           "                <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty=\"(UIElement.Visibility)\" Storyboard.TargetName=\"TextBlock_10_FH3ModEngine\">\r\n"
+                           "                    <DiscreteObjectKeyFrame KeyTime=\"0\" Value=\"{x:Static Visibility.Visible}\"/>\r\n"
+                           "                </ObjectAnimationUsingKeyFrames>\r\n"
+                           "            </Storyboard>\r\n\r\n            ");
+            engine = true;
+        } else {
+            slog("tuning menu: the Differential tab doesn't look as expected; the ENGINE rows go to Springs");
+            xaml += examl;
+        }
+    }
+    {
+        // the Springs rows and the resources: positions found again (the inserts above may have moved them)
+        const std::size_t sp2   = page.find("x:Name=\"StackPanel_5_Springs\"");
+        const std::size_t sp2_e = page.find("</local:CommonListBox>", sp2);
+        page.insert(sp2_e, xaml);
+        const std::size_t rs2 = page.find("</Page.Resources>");
+        page.insert(page.rfind("</ResourceDictionary>", rs2), res);
+    }
+    g_engine_tab.store(engine);
     const bool ok = set_file(&g_owner_mod, "UI/Scenes/Anthem/A_TuningOptions.xaml", page.data(), page.size()) != 0;
     slog(std::string("tuning menu: ") + std::to_string(rows.size()) + " slider row(s) " + (ok ? "written" : "NOT written"));
     return ok;
@@ -4157,6 +4210,90 @@ FH3Hook* hook_title(FH3Mod* m) {
     return h;
 }
 
+
+// ---- the ENGINE tab (API 17): a tenth entry in the game's tuning tab table --------------------------------------------
+// The game describes the tuning tabs in a static table (0x4E4F230, 9 entries of 0x90 bytes: +0 the visual state's name,
+// +8 the list's name, +0x10 a std::function run when the tab opens (Gearing's graph), +0x50 a std::function making the
+// tab's title, a localised string). The tuning scene's constructor (0x16DF700) makes the titles of 9 entries; the tab
+// switch (0x16E9CC0) and the focus update (0x16E7990) index the table with the tab list's SelectedIndex. A copy with
+// a tenth entry (VisualState_FH3ModEngine / StackPanel_10_FH3ModEngine, title "Engine" from Tuning.str) is made near
+// the exe and those three places are pointed at it, the constructor counting to 10.
+constexpr uintptr_t RVA_TUNE_TABS = 0x4E4F230, RVA_TUNE_CTOR_LEA = 0x16DF756, RVA_TUNE_CTOR_COUNT = 0x16DF75D,
+                    RVA_TUNE_SWITCH_LEA = 0x16E9D18, RVA_TUNE_FOCUS_LEA = 0x16E7A37, RVA_LOC_STRING = 0x1CA7BC0, RVA_BOX_LOC = 0x1EDFCE0;
+constexpr uint32_t kEngineTitleKey = 0x4E47454Eu;   // "ENGN" in Tuning.str
+constexpr int kTabSize = 0x90;
+uint64_t engine_title_call(void* /*impl*/, void** out) {
+    // what the game's own title functions do (0x16C6A70): a localised string object for (table "Tuning", key), boxed into *out
+    using LocFn = void** (*)(void**, const char*, uint32_t);
+    using BoxFn = void (*)(void**, void**);
+    void* loc = nullptr;
+    reinterpret_cast<LocFn>(g_base + RVA_LOC_STRING)(&loc, "Tuning", kEngineTitleKey);
+    void* tmp = loc;
+    if (tmp) reinterpret_cast<void (*)(void*)>((*reinterpret_cast<void***>(tmp))[2])(tmp);         // AddRef
+    reinterpret_cast<BoxFn>(g_base + RVA_BOX_LOC)(out, &tmp);
+    if (tmp) reinterpret_cast<void (*)(void*)>((*reinterpret_cast<void***>(tmp))[3])(tmp);         // Release
+    if (loc) reinterpret_cast<void (*)(void*)>((*reinterpret_cast<void***>(loc))[3])(loc);
+    return reinterpret_cast<uint64_t>(out);
+}
+void* engine_title_self(void* impl, void*) { return impl; }
+void engine_title_none(void*, bool) {}
+void* g_engine_title_vt[6] = { reinterpret_cast<void*>(&engine_title_self), reinterpret_cast<void*>(&engine_title_self),
+                               reinterpret_cast<void*>(&engine_title_call), reinterpret_cast<void*>(&engine_title_self),
+                               reinterpret_cast<void*>(&engine_title_none), reinterpret_cast<void*>(&engine_title_self) };
+char* alloc_near_exe(std::size_t size) {
+    SYSTEM_INFO si; GetSystemInfo(&si);
+    const uintptr_t gran = si.dwAllocationGranularity;
+    for (uintptr_t a = (g_base + 0x6000000 + gran - 1) & ~(gran - 1); a < g_base + 0x70000000; a += gran)
+        if (void* p = VirtualAlloc(reinterpret_cast<void*>(a), size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE)) return static_cast<char*>(p);
+    return nullptr;
+}
+bool engine_tab_install() {
+    char* base = reinterpret_cast<char*>(g_base);
+    const char* tabs = base + RVA_TUNE_TABS;
+    // the table must be the one we know: entry 0 = Tires, entry 8 = Differential
+    __try {
+        if (std::strcmp(*reinterpret_cast<const char* const*>(tabs), "VisualState_Tires") != 0 ||
+            std::strcmp(*reinterpret_cast<const char* const*>(tabs + 8 * kTabSize), "VisualState_Differential") != 0) {
+            slog("ENGINE tab: the game's tuning tab table isn't the one expected; no ENGINE tab");
+            return false;
+        }
+    } __except (EXCEPTION_EXECUTE_HANDLER) { slog("ENGINE tab: the tuning tab table can't be read; no ENGINE tab"); return false; }
+    char* mem = alloc_near_exe(0x1000);
+    if (!mem) { slog("ENGINE tab: no memory near the game; no ENGINE tab"); return false; }
+    char* table = mem;
+    std::memcpy(table, tabs, 9 * kTabSize);   // the functions' storage pointers still point into the game's table: fine, it stays
+    char* e = table + 9 * kTabSize;
+    std::memset(e, 0, kTabSize);
+    static const char kState[] = "VisualState_FH3ModEngine", kList[] = "StackPanel_10_FH3ModEngine";
+    *reinterpret_cast<const char**>(e + 0) = kState;
+    *reinterpret_cast<const char**>(e + 8) = kList;
+    void** impl = reinterpret_cast<void**>(mem + 10 * kTabSize);           // the title function object: just a vtable
+    impl[0] = g_engine_title_vt;
+    *reinterpret_cast<void***>(e + 0x88) = impl;                             // std::function's object pointer (+0x50 + 0x38)
+    auto rel = [&](uintptr_t rva_lea, const char* target, unsigned char op2, unsigned char op3, const char* what) -> bool {
+        char* at = base + rva_lea;
+        const unsigned char* c = reinterpret_cast<const unsigned char*>(at);
+        if (c[0] != 0x48 || c[1] != op2 || c[2] != op3) { slog(std::string("ENGINE tab: ") + what + " isn't the instruction expected"); return false; }
+        const int64_t d = target - (at + 7);
+        if (d > INT32_MAX || d < INT32_MIN) { slog("ENGINE tab: the new table is out of reach"); return false; }
+        unsigned char b[7] = { 0x48, op2, op3 };
+        const int32_t d32 = static_cast<int32_t>(d);
+        std::memcpy(b + 3, &d32, 4);
+        FH3Hook* h = g_api->patch_bytes(&g_owner_mod, what, at, c, b, 7);
+        return h && g_api->enable_hooks(&g_owner_mod, h);
+    };
+    const unsigned char count_old[5] = { 0xBE, 0x09, 0x00, 0x00, 0x00 }, count_new[5] = { 0xBE, 0x0A, 0x00, 0x00, 0x00 };
+    bool ok = rel(RVA_TUNE_SWITCH_LEA, table, 0x8D, 0x35, "Tuning: tab switch -> 10 tabs") &&
+              rel(RVA_TUNE_FOCUS_LEA, table, 0x8D, 0x05, "Tuning: tab focus -> 10 tabs") &&
+              rel(RVA_TUNE_CTOR_LEA, table + 0x50, 0x8D, 0x3D, "Tuning: tab titles -> 10 tabs");
+    if (ok) {
+        FH3Hook* h = g_api->patch_bytes(&g_owner_mod, "Tuning: 10 tab titles", base + RVA_TUNE_CTOR_COUNT, count_old, count_new, 5);
+        ok = h && g_api->enable_hooks(&g_owner_mod, h);
+    }
+    slog(ok ? "ENGINE tab: added to the tuning menu" : "ENGINE tab: could not be added (see above)");
+    return ok;
+}
+
 // ---- hooking up ----------------------------------------------------------------------------
 void hook_game() {
     void* base = g_api->wait_for_code(0xFFFFFFFFu);
@@ -4261,6 +4398,7 @@ void hook_game_fh3() {
     void* base = g_api->wait_for_code(0xFFFFFFFFu);
     if (!base) return;
     g_base = reinterpret_cast<uintptr_t>(base);
+    if (g_engine_tab.load()) engine_tab_install();
     struct Check {
         uintptr_t rva;
         std::vector<uint8_t> bytes;
@@ -4314,6 +4452,12 @@ void hook_game_fh3() {
 
 } // namespace
 
+FH3Mod* settings_engine_row_mod() {
+    std::scoped_lock lk{g_mu};
+    for (const TuneRow& r : g_tune_rows) if (r.engine) return r.mod;
+    return nullptr;
+}
+
 // ---- the API ---------------------------------------------------------------------------------
 
 int tuning_row_add(FH3Mod* m, const FH3TuningRow* t) {
@@ -4352,7 +4496,8 @@ int tuning_row_add(FH3Mod* m, const FH3TuningRow* t) {
     r.mod = m; r.key = t->key; r.label = t->label; r.help = t->help ? t->help : "";
     r.fmin = t->min; r.fmax = t->max; r.fstep = t->step; r.decimals = t->decimals;
     r.get = t->get; r.set = t->set; r.visible = t->visible; r.user = t->user;
-    log_line(m->name, std::string("tuning row ") + t->key + " added");
+    if (t->size >= offsetof(FH3TuningRow, page) + sizeof(void*) && t->page && _stricmp(t->page, "Engine") == 0) r.engine = true;
+    log_line(m->name, std::string("tuning row ") + t->key + " added" + (r.engine ? " (ENGINE tab)" : ""));
     return 1;
 }
 

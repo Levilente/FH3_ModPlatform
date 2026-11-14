@@ -183,6 +183,7 @@ const char* title_started_by(FH3Mod* mod);
 bool settings_hub_open(int which);
 void mods_reopen(int which);
 void settings_start(const FH3ModApi* api);
+FH3Mod* settings_engine_row_mod();   // a mod that put a tuning row on the ENGINE tab, or null (API 17)
 
 // The MODS tab (platform 2.5.0): every mod in fh3-mods, loaded or turned off there.
 struct ModEntry {
