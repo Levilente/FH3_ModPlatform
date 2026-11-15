@@ -75,8 +75,16 @@ bool readable(const void* p, std::size_t n) {
 }
 
 bool code_matches(uintptr_t rva, const uint8_t* expect, std::size_t n) {
-    return readable(reinterpret_cast<void*>(g_base + rva), n) &&
-           std::memcmp(reinterpret_cast<void*>(g_base + rva), expect, n) == 0;
+    // Another mod may have hooked the function already (the first bytes are then its jump): compare the game's own bytes.
+    std::vector<uint8_t> got(n);
+    if (!unpatched_bytes(reinterpret_cast<void*>(g_base + rva), got.data(), n)) return false;
+    if (std::memcmp(got.data(), expect, n) == 0) return true;
+    char hex[3 * 24 + 1] = {};
+    for (std::size_t i = 0; i < n && i < 24; ++i) std::snprintf(hex + i * 3, 4, "%02X ", got[i]);
+    char rv[24];
+    std::snprintf(rv, sizeof rv, "%llX", static_cast<unsigned long long>(rva));
+    slog(std::string("game+") + rv + " reads " + hex + "(not the bytes expected)");
+    return false;
 }
 
 // ---- the rows -------------------------------------------------------------------------

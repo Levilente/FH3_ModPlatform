@@ -156,6 +156,7 @@ void apply_database(const std::vector<FH3Mod*>& mods);
 std::filesystem::path extra_options_dir();
 void fill_hook_api(FH3ModApi& api);
 bool hook_at(const void* p, char* out, std::size_t n); // p is in a hook's trampoline or stub
+bool unpatched_bytes(const void* p, void* out, std::size_t n); // game code as it was before any mod's hook patched it
 int hook_count();
 const char* hook_line(int i, bool* enabled);
 

@@ -1690,4 +1690,21 @@ void* hook_game_function(uint32_t rva, void* detour, const char* what, void** or
     return tramp;
 }
 
+// The n bytes at p as the game had them: what is in memory, with the places other mods' hooks have patched put back
+// to their first state. (A mod that hooked a function earlier must not make the platform think the game's code changed.)
+bool unpatched_bytes(const void* p, void* out, std::size_t n) {
+    if (!p || !out) return false;
+    SIZE_T got = 0;
+    if (!ReadProcessMemory(GetCurrentProcess(), p, out, n, &got) || got != n) return false;
+    auto* dst        = static_cast<unsigned char*>(out);
+    const char* from = static_cast<const char*>(p);
+    std::scoped_lock lk{g_mu};
+    for (auto& s : g_sites) {
+        const char* lo = std::max(from, static_cast<const char*>(s->lo));
+        const char* hi = std::min(from + n, static_cast<const char*>(s->hi));
+        for (const char* c = lo; c < hi; ++c) dst[c - from] = s->before[static_cast<std::size_t>(c - s->lo)];
+    }
+    return true;
+}
+
 } // namespace fh3platform

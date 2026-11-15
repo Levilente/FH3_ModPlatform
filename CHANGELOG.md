@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.3
+
+- **The Mods page no longer goes missing when another mod hooks first.** At start the platform checks the game's code before it builds the Mods page. When another mod had already hooked one of those functions (for example `AVUI::Type::FindProperty`), the check saw that mod's jump instead of the game's bytes, said "doesn't look as expected; no Mods page", and the MODS tile opened the HUD options page. Which mod got there first changes from start to start, so it happened now and then. The check now compares the game's own bytes (the hooked places are put back to their first state) and, when it still doesn't match, logs the bytes it read.
+
 ## 1.4.2
 
 **Requirements:** Forza Horizon 3 on PC through Azimuth (tested with 1.0.4), the Xbox One exe of 5 Jun 2018. Extra Options (`winmm.dll`) is optional; 0.6.0 is tested. Azimuth must load a `DINPUT8.dll` from its own folder (it does by default). Copy `DINPUT8.dll` over the old one.
