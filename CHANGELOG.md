@@ -2,7 +2,7 @@
 
 ## 1.4.5
 
-- **The ENGINE tab scrolls with the focus.** With more rows than the page has bands (13), the list moves up as the focus goes down, and back as it comes up (the focused row stays on the 10th band; the ends of the list end the scroll). The lists don't use the game's scroll bar list style any more (it kept the focus from moving between the rows).
+- **The ENGINE tab scrolls with the focus.** With more rows than the page has bands (13), the list moves up as the focus goes down, and back as it comes up (the focused row stays on the 10th band; the ends of the list end the scroll; every row counts as two bands, its header and itself). The lists don't use the game's scroll bar list style any more (it kept the focus from moving between the rows).
 - Includes 1.4.3: the Mods page no longer goes missing when another mod hooks first (the check now compares the game's own bytes).
 
 ## 1.4.3

@@ -1916,8 +1916,8 @@ bool write_tuning_page() {
     std::string res = "            <local:FZBooleanToVisibilityConverter x:Key=\"FH3Mod_TuneShow\" UseHidden=\"false\" InvertResult=\"false\" />\r\n";
     std::string xaml, examl;
     std::size_t engine_rows = 0;
-    for (const TuneRow& r : rows) if (r.engine) ++engine_rows;
-    // More ENGINE rows than the page has bands (13 of 53 px): the list is moved up as the focus goes down (the selected row's index
+    for (const TuneRow& r : rows) if (r.engine) engine_rows += 2;   // every row is two list items: its header band and the row itself
+    // More ENGINE list items (header band + row each) than the page has bands (13 of 53 px): the list is moved up as the focus goes down (the selected row's index
     // picks the shift) inside a box of 13 bands that clips it. The focus stays on the 10th band, and the end of the list ends the scroll.
     const bool engine_scroll = engine_rows > 13;
     if (engine_scroll) {
