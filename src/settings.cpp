@@ -1841,7 +1841,7 @@ bool write_units_page() {
 // A_TuningOptions.xaml with the mods' slider rows at the end of the Springs list (after Ride Height). The rows are the
 // game's own tuning rows (label, slider in the game's slider styles, number), each in a list item of its own so a row
 // that isn't shown for the car being tuned leaves no gap. If the file isn't as expected the game's own is used.
-std::string tune_row_xaml(std::size_t i, const TuneRow& r) {
+std::string tune_row_xaml(std::size_t i, const TuneRow& r, const char* item_style = "A_Style_ListBoxItem_List_Tuning") {
     const std::string n = std::to_string(i);
     // The label may be "Header|Row label (unit)": the header band above the row (like RIDE HEIGHT / LOW / HIGH / cm) gets the part
     // before the bar in capitals, the row the part after it; a trailing "(unit)" goes to the band's right end. Without a bar the
@@ -1859,7 +1859,7 @@ std::string tune_row_xaml(std::size_t i, const TuneRow& r) {
     // rows (items of the list) is the row's ItemsControl itself. Our rows are written as list items, so the header's item gets the
     // header ItemsControl as its DataContext (the dark panel style the game's header bands set), and its visibility reads the
     // view-model through the page instead.
-    x += "                                <ListBoxItem Style=\"{StaticResource A_Style_ListBoxItem_List_Tuning}\" Focusable=\"False\" DataContext=\"{Binding ElementName=FH3Mod_Tune_Head_" + n + "}\"\r\n"
+    x += std::string("                                <ListBoxItem Style=\"{StaticResource ") + item_style + "}\" Focusable=\"False\" DataContext=\"{Binding ElementName=FH3Mod_Tune_Head_" + n + "}\"\r\n"
          "                                             Visibility=\"{Binding Visibility, ElementName=FH3Mod_Tune_Row_" + n + "}\">\r\n"
          "                                <ItemsControl x:Name=\"FH3Mod_Tune_Head_" + n + "\" Style=\"{StaticResource A_Style_ItemsControl_1x3_TuningSpaced_Header}\">\r\n"
          "                                    <local:FZTextBlock Style=\"{StaticResource A_Style_FZTextBlock_Tune_ItemTitle}\" Text=\"" + xml_escape(head) + "\" HorizontalAlignment=\"Left\" Grid.Column=\"0\" />\r\n"
@@ -1868,7 +1868,7 @@ std::string tune_row_xaml(std::size_t i, const TuneRow& r) {
          "                                    <local:FZTextBlock Style=\"{StaticResource A_Style_FZTextBlock_Tune_ItemTitle}\" Text=\"" + xml_escape(unit) + "\" HorizontalAlignment=\"Right\" Grid.Column=\"2\" />\r\n"
          "                                </ItemsControl>\r\n"
          "                                </ListBoxItem>\r\n";
-    x += "                                <ListBoxItem x:Name=\"FH3Mod_Tune_Row_" + n + "\" Style=\"{StaticResource A_Style_ListBoxItem_List_Tuning}\" Tag=\"" + xml_escape(r.help) + "\"\r\n"
+    x += "                                <ListBoxItem x:Name=\"FH3Mod_Tune_Row_" + n + "\" Style=\"{StaticResource " + item_style + "}\" Tag=\"" + xml_escape(r.help) + "\"\r\n"
          "                                             " + vis + ">\r\n"
          "                                <ItemsControl Style=\"{StaticResource A_Style_ItemsControl_1x3_TuningSpaced}\" Tag=\"" + xml_escape(r.help) + "\">\r\n"
          "                                    <local:FZTextBlock Style=\"{StaticResource A_Style_FZTextBlock_Tune_ItemLabel}\"\r\n"
@@ -1930,10 +1930,51 @@ bool write_tuning_page() {
                    "                    </DataTrigger>\r\n";
         }
         res += "                </Style.Triggers>\r\n            </Style>\r\n";
+        // The stock row template focuses the row under the mouse on MouseEnter; when the list moves under a still mouse that pulled the
+        // focus to another row (and so on). The same template without that command, for the rows of the scrolling list.
+        res += R"X(            <Style x:Key="FH3Mod_Style_ListBoxItem_Tuning_NoHover" TargetType="{x:Type ListBoxItem}" BasedOn="{StaticResource A_Style_ListBoxItem_List_Default}">
+                <Setter Property="Height" Value="50"/>
+                <Setter Property="Margin" Value="0,0,0,3" />
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="1" ScaleY="1" />
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                            <Grid>
+                                <Grid x:Name="Grid_ItemContainer">
+                                    <local:FZMaterial x:Name="Shadow" Style="{StaticResource A_Style_FZMaterial_ShadowBase}" Visibility="Collapsed"/>
+                                    <local:FZMaterial x:Name="Highlight" Visibility="Collapsed" Margin="-12,0,0,0" Style="{StaticResource A_Style_FZMaterial_AcrylicPanel_Highlight}" HorizontalAlignment="Left" Width="12"/>
+                                    <local:FZMaterial x:Name="Background" Style="{Binding (local:BindingProxy.B)}" />
+                                    <ContentPresenter x:Name="Presenter" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="30,0,30,0"/>
+                                </Grid>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                    <Setter Property="Panel.ZIndex" Value="1"/>
+                                    <Setter Property="local:ZPanel.ZOffset" Value="{StaticResource A_Double_ZOffset_Acrylic}" />
+                                    <Setter Property="RenderTransform">
+                                        <Setter.Value>
+                                            <ScaleTransform ScaleX="1.05" ScaleY="1.05" />
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter TargetName="Highlight" Property="Visibility" Value="Visible" />
+                                    <Setter TargetName="Shadow" Property="Visibility" Value="Visible" />
+                                    <Setter Property="IsSelected" Value="True" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+)X";
     }
     for (std::size_t i = 0; i < rows.size(); ++i) {
         res += "            <local:NumUnitConverter x:Key=\"FH3Mod_TuneNum_" + std::to_string(i) + "\" FractionDigits=\"" + std::to_string(rows[i].decimals) + "\" ShowUnit=\"False\" />\r\n";
-        (rows[i].engine ? examl : xaml) += tune_row_xaml(i, rows[i]);
+        (rows[i].engine ? examl : xaml) += tune_row_xaml(i, rows[i], rows[i].engine && engine_scroll ? "FH3Mod_Style_ListBoxItem_Tuning_NoHover" : "A_Style_ListBoxItem_List_Tuning");
     }
     // The ENGINE tab (API 17): a list of its own after Differential's, its description block, and its visual state; the
     // game's tab table gets a tenth entry pointing at them (engine_tab_install, once the code is ready).
@@ -1949,9 +1990,10 @@ bool write_tuning_page() {
         if (d_e != std::string::npos && t_e != std::string::npos && v_e != std::string::npos && b != std::string::npos && d_e > t_e && t_e > v_e && v_e > b) {
             // (positions, from the end of the page backwards so the earlier ones stand)
             const std::size_t d_end = d_e + std::strlen("</local:CommonListBox>");
-            page.insert(d_end, std::string("\r\n\r\n") + (engine_scroll ? "                            <Grid Height=\"689\" VerticalAlignment=\"Top\" ClipToBounds=\"True\">\r\n" : "") +
+            page.insert(d_end, std::string("\r\n\r\n") + (engine_scroll ? "                            <Grid Height=\"689\" VerticalAlignment=\"Top\" ClipToBounds=\"True\" Margin=\"-80,0,-80,0\">\r\n" : "") +
                                "                            <local:CommonListBox x:Name=\"StackPanel_10_FH3ModEngine\"\r\n"
-                               "                                                    KeyboardNavigation.DirectionalNavigation=\"Contained\"\r\n"
+                               "                                                    KeyboardNavigation.DirectionalNavigation=\"Contained\"\r\n" +
+                               std::string(engine_scroll ? "                                                    Margin=\"80,0,80,0\"\r\n" : "") +
                                "                                                    Style=\"{StaticResource " + (engine_scroll ? "FH3Mod_Style_ListBox_Tuning_Engine" : "A_Style_ListBox_List_Tuning") + "}\"\r\n"
                                "                                                    ItemContainerStyle=\"{StaticResource A_Style_ListBoxItem_List_Tuning}\">\r\n" +
                                examl + "                            </local:CommonListBox>" + (engine_scroll ? "\r\n                            </Grid>" : ""));

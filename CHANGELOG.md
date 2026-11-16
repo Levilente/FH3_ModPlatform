@@ -3,6 +3,7 @@
 ## 1.4.5
 
 - **The ENGINE tab scrolls with the focus.** With more rows than the page has bands (13), the list moves up as the focus goes down, and back as it comes up (the focused row stays on the 10th band; the ends of the list end the scroll; every row counts as two bands, its header and itself). The lists don't use the game's scroll bar list style any more (it kept the focus from moving between the rows).
+- The rows of the scrolling list don't take the focus when the mouse moves over them (the stock row template does; when the list moved under a still mouse that pulled the focus around), and the box that clips the list leaves room for the focused row's highlight and shadow.
 - Includes 1.4.3: the Mods page no longer goes missing when another mod hooks first (the check now compares the game's own bytes).
 
 ## 1.4.3
