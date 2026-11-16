@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.5
+
+- The scrolling ENGINE / Springs list is no longer a focus target itself, so the stick and the keys move between the rows (1.4.4 showed the scroll bar but the focus jumped to the ends). Includes 1.4.4 and 1.4.3.
+
 ## 1.4.4
 
 - **The ENGINE tab and the Springs list scroll.** The mods' tuning rows used to run past the 13 bands of the page; the lists now use the game's own scrolling list (13 rows tall) and scroll with the stick or the keys when there are more rows.

@@ -1918,6 +1918,7 @@ bool write_tuning_page() {
     // bands (13 rows of 50 + 3), hidden until its tab's visual state shows it like the stock tuning lists.
     res += "            <Style x:Key=\"FH3Mod_Style_ListBox_Tuning_Scroll\" TargetType=\"{x:Type local:CommonListBox}\" BasedOn=\"{StaticResource A_Style_ListBox_List_Default_ScrollBar}\">\r\n"
            "                <Setter Property=\"Visibility\" Value=\"Hidden\"/>\r\n"
+           "                <Setter Property=\"Focusable\" Value=\"False\"/>\r\n"
            "                <Setter Property=\"VerticalAlignment\" Value=\"Top\"/>\r\n"
            "                <Setter Property=\"MaxHeight\" Value=\"689\"/>\r\n"
            "            </Style>\r\n";
