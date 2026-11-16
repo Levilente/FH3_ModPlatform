@@ -1914,6 +1914,13 @@ bool write_tuning_page() {
         return false;
     }
     std::string res = "            <local:FZBooleanToVisibilityConverter x:Key=\"FH3Mod_TuneShow\" UseHidden=\"false\" InvertResult=\"false\" />\r\n";
+    // A list that scrolls: the game's own scrolling list style (the one its HUD options page uses), at the height of the 13 stock
+    // bands (13 rows of 50 + 3), hidden until its tab's visual state shows it like the stock tuning lists.
+    res += "            <Style x:Key=\"FH3Mod_Style_ListBox_Tuning_Scroll\" TargetType=\"{x:Type local:CommonListBox}\" BasedOn=\"{StaticResource A_Style_ListBox_List_Default_ScrollBar}\">\r\n"
+           "                <Setter Property=\"Visibility\" Value=\"Hidden\"/>\r\n"
+           "                <Setter Property=\"VerticalAlignment\" Value=\"Top\"/>\r\n"
+           "                <Setter Property=\"MaxHeight\" Value=\"689\"/>\r\n"
+           "            </Style>\r\n";
     std::string xaml, examl;
     for (std::size_t i = 0; i < rows.size(); ++i) {
         res += "            <local:NumUnitConverter x:Key=\"FH3Mod_TuneNum_" + std::to_string(i) + "\" FractionDigits=\"" + std::to_string(rows[i].decimals) + "\" ShowUnit=\"False\" />\r\n";
@@ -1935,7 +1942,7 @@ bool write_tuning_page() {
             const std::size_t d_end = d_e + std::strlen("</local:CommonListBox>");
             page.insert(d_end, "\r\n\r\n                            <local:CommonListBox x:Name=\"StackPanel_10_FH3ModEngine\"\r\n"
                                "                                                    KeyboardNavigation.DirectionalNavigation=\"Contained\"\r\n"
-                               "                                                    Style=\"{StaticResource A_Style_ListBox_List_Tuning}\"\r\n"
+                               "                                                    Style=\"{StaticResource FH3Mod_Style_ListBox_Tuning_Scroll}\"\r\n"
                                "                                                    ItemContainerStyle=\"{StaticResource A_Style_ListBoxItem_List_Tuning}\">\r\n" +
                                examl + "                            </local:CommonListBox>");
             const std::size_t t_end = t_e + std::strlen("</local:AutoScrollPanel>");
@@ -1965,7 +1972,16 @@ bool write_tuning_page() {
     {
         // the Springs rows and the resources: positions found again (the inserts above may have moved them)
         const std::size_t sp2   = page.find("x:Name=\"StackPanel_5_Springs\"");
-        const std::size_t sp2_e = page.find("</local:CommonListBox>", sp2);
+        std::size_t sp2_e = page.find("</local:CommonListBox>", sp2);
+        if (!xaml.empty()) {   // the Springs list scrolls when the mods' rows make it longer than the page
+            static const char kStock[] = "Style=\"{StaticResource A_Style_ListBox_List_Tuning}\"";
+            const std::size_t st = page.find(kStock, sp2);
+            if (st != std::string::npos && st < sp2_e) {
+                const std::string rep = "Style=\"{StaticResource FH3Mod_Style_ListBox_Tuning_Scroll}\"";
+                page.replace(st, std::strlen(kStock), rep);
+                sp2_e += rep.size() - std::strlen(kStock);
+            }
+        }
         page.insert(sp2_e, xaml);
         const std::size_t rs2 = page.find("</Page.Resources>");
         page.insert(page.rfind("</ResourceDictionary>", rs2), res);

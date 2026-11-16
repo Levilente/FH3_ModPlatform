@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.4
+
+- **The ENGINE tab and the Springs list scroll.** The mods' tuning rows used to run past the 13 bands of the page; the lists now use the game's own scrolling list (13 rows tall) and scroll with the stick or the keys when there are more rows.
+- Includes 1.4.3: the Mods page no longer goes missing when another mod hooks first (the check now compares the game's own bytes).
+
 ## 1.4.3
 
 - **The Mods page no longer goes missing when another mod hooks first.** At start the platform checks the game's code before it builds the Mods page. When another mod had already hooked one of those functions (for example `AVUI::Type::FindProperty`), the check saw that mod's jump instead of the game's bytes, said "doesn't look as expected; no Mods page", and the MODS tile opened the HUD options page. Which mod got there first changes from start to start, so it happened now and then. The check now compares the game's own bytes (the hooked places are put back to their first state) and, when it still doesn't match, logs the bytes it read.
