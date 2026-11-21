@@ -224,6 +224,58 @@ bool ieq(std::string_view a, std::string_view b) {
 
 } // namespace
 
+// The same, reading only the zip's directory and the one entry (for big zips like _library\Shaders.zip, 235 MB).
+std::vector<char> unzip_entry(const fs::path& zip, std::string_view name) {
+    std::ifstream in{zip, std::ios::binary};
+    if (!in) return {};
+    in.seekg(0, std::ios::end);
+    const std::size_t total = static_cast<std::size_t>(in.tellg());
+    if (total < 22) return {};
+    const std::size_t tail_len = std::min<std::size_t>(total, 22 + 65536);
+    std::vector<char> tail(tail_len);
+    in.seekg(static_cast<std::streamoff>(total - tail_len));
+    in.read(tail.data(), static_cast<std::streamsize>(tail_len));
+    std::size_t eocd = std::string::npos;
+    for (std::size_t i = tail_len - 22 + 1; i-- > 0;)
+        if (r32(tail, i) == 0x06054b50) {
+            eocd = i;
+            break;
+        }
+    if (eocd == std::string::npos) return {};
+    const std::size_t entries = r16(tail, eocd + 10), cd_size = r32(tail, eocd + 12), cd_at = r32(tail, eocd + 16);
+    if (cd_at + cd_size > total) return {};
+    std::vector<char> cd(cd_size);
+    in.seekg(static_cast<std::streamoff>(cd_at));
+    in.read(cd.data(), static_cast<std::streamsize>(cd_size));
+    std::size_t o = 0;
+    for (std::size_t e = 0; e < entries && o + 46 <= cd.size() && r32(cd, o) == 0x02014b50; ++e) {
+        const uint16_t method = r16(cd, o + 10);
+        const uint32_t csize = r32(cd, o + 20), usize = r32(cd, o + 24);
+        const uint16_t nlen = r16(cd, o + 28), xlen = r16(cd, o + 30), clen = r16(cd, o + 32);
+        const uint32_t local = r32(cd, o + 42);
+        if (o + 46 + nlen > cd.size()) return {};
+        const std::string_view n{cd.data() + o + 46, nlen};
+        o += 46 + nlen + xlen + clen;
+        if (!ieq(n, name)) continue;
+        std::vector<char> head(30);
+        in.seekg(static_cast<std::streamoff>(local));
+        in.read(head.data(), 30);
+        if (!in || r32(head, 0) != 0x04034b50) return {};
+        std::vector<char> d(csize);
+        in.seekg(static_cast<std::streamoff>(local + 30 + r16(head, 26) + r16(head, 28)));
+        in.read(d.data(), static_cast<std::streamsize>(csize));
+        if (!in) return {};
+        if (method == 0) return d;
+        if (method != 8) return {};
+        Inflater inf;
+        inf.in  = reinterpret_cast<const unsigned char*>(d.data());
+        inf.len = csize;
+        if (!inf.run() || inf.out.size() != usize) return {};
+        return {inf.out.begin(), inf.out.end()};
+    }
+    return {};
+}
+
 std::vector<char> unzip_file(const fs::path& zip, std::string_view name) {
     std::ifstream in{zip, std::ios::binary};
     std::vector<char> d((std::istreambuf_iterator<char>(in)), {});

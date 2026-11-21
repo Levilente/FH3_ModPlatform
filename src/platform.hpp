@@ -155,6 +155,10 @@ void apply_database(const std::vector<FH3Mod*>& mods);
 // (WINEDLLOVERRIDES="winmm=n,b"), and still report that file's path for it.
 std::filesystem::path extra_options_dir();
 void fill_hook_api(FH3ModApi& api);
+// graphics.cpp (API 18)
+int api_add_shader_hook(FH3Mod* mod, int (*fn)(void*, FH3Shader*), void* user);
+void* api_read_game_file(const char* media_path, size_t* size);
+void api_free_game_file(void* data);
 bool hook_at(const void* p, char* out, std::size_t n); // p is in a hook's trampoline or stub
 bool unpatched_bytes(const void* p, void* out, std::size_t n); // game code as it was before any mod's hook patched it
 int hook_count();

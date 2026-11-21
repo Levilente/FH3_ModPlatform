@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#define FH3MOD_API_VERSION 17
+#define FH3MOD_API_VERSION 18
 
 #ifdef __cplusplus
 #define FH3MOD_EXPORT extern "C" __declspec(dllexport)
@@ -54,6 +54,7 @@ typedef struct FH3PageRow FH3PageRow;
 typedef struct FH3TitleEntry FH3TitleEntry;
 typedef struct FH3Hotkey FH3Hotkey;
 typedef struct FH3TuningRow FH3TuningRow;
+typedef struct FH3Shader FH3Shader;
 
 /* The CPU's registers at an instruction hook (API 7): see hook_instruction.
    rsp is what it was at the hooked instruction; changing it has no effect. */
@@ -627,7 +628,56 @@ typedef struct FH3ModApi {
        added twice); the data the game reads at startup (text, files, SQL, the rows' labels, upgrade stages and prices) is
        not applied again: a change to it shows after a restart. is_reloading() tells the second run from the first. */
     int (*is_reloading)(void);   /* 1 while your fh3mod_init runs as a reload, else 0 */
+
+    /* ==== API version 18 (platform 1.5.0): check api_version >= 18 ===== */
+
+    /* ---- Graphics: the game's shaders (see FH3Shader below) -------------------------------------------------------
+       The game creates every shader through Azimuth's D3D11.x device (CreateVertexShader, CreatePixelShader, ...), with
+       the DXBC bytecode it ships: the material shaders of media\_library\Shaders.zip (*.durango.pso/.vso) and the
+       post-processing ones built into the exe. add_shader_hook calls `fn` for every shader created from then on, before
+       Azimuth translates it, so a mod can look at it (dump it, learn which one is the tone mapper) or hand back other
+       bytecode for it. The platform starts watching when the first mod asks, so call it from fh3mod_init: most shaders
+       are created while the game starts and loads a world.
+
+       In `fn`, set shader->replacement and replacement_size to your bytecode (DXBC, the same stage and the same
+       inputs/outputs) and return 1 to use it; return 0 to leave the shader as it is. Your bytecode has to stay valid
+       until fn returns (the platform copies it). If Azimuth refuses it, the platform creates the game's own shader
+       instead and logs it, so a bad replacement costs the effect, not the game. Hooks run in the order mods added them;
+       the first to return 1 wins (the others still see the shader, with `replaced` set). fn runs on the game's render
+       or loading threads: keep it quick, don't block, never call into the game.
+
+       Works with Azimuth 1.0.4 (the one the platform is tested with); with another Azimuth it returns 0 and logs why. */
+    int (*add_shader_hook)(FH3Mod* mod, int (*fn)(void* user, FH3Shader* shader), void* user);
+
+    /* ---- The game's own files ------------------------------------------------------------------------------------
+       read_game_file reads a file as the game ships it under game:\media (not anyone's override), the same paths as
+       set_file: "renderscenarios/XboxOne/Global.xml" is the file Global.xml in media\renderscenarios.zip. Returns a
+       buffer from the platform's heap and its size in *size, or NULL (no such file); give it back with
+       free_game_file. For a mod that edits a game file before set_file, without shipping a copy of the game's data. */
+    void* (*read_game_file)(const char* media_path, size_t* size);
+    void (*free_game_file)(void* data);
 } FH3ModApi;
+
+/* Shader stages (FH3Shader.stage). */
+#define FH3_SHADER_VERTEX   0
+#define FH3_SHADER_HULL     1
+#define FH3_SHADER_DOMAIN   2
+#define FH3_SHADER_GEOMETRY 3
+#define FH3_SHADER_PIXEL    4
+#define FH3_SHADER_COMPUTE  5
+
+/* A shader the game is creating (API 18, add_shader_hook). */
+struct FH3Shader {
+    uint32_t size;                 /* sizeof(FH3Shader) */
+    uint32_t stage;                /* FH3_SHADER_... */
+    const void* bytecode;          /* the game's DXBC */
+    size_t bytecode_size;
+    uint8_t hash[16];              /* the DXBC container's own checksum (bytes 4..19): the same shader always has the same hash */
+    uint64_t hash64;               /* the first 8 bytes of hash, as a number: handy as a file name or a map key */
+    int replaced;                  /* 1 if a hook before yours already replaced it */
+    const void* replacement;       /* set these and return 1 to replace the shader */
+    size_t replacement_size;
+};
 
 #define FH3MOD_CAR_MAKE_DRIVEN 1u   /* upgrade_garage_for_car: make the car found the driven car */
 #define FH3MOD_CAR_IS_PLAYERS  2u   /* upgrade_garage_for_car: the caller knows this is the car the player drives */

@@ -14,6 +14,8 @@ namespace fh3platform {
 
 // One file out of a zip (stored or deflated), or empty if it isn't there.
 std::vector<char> unzip_file(const std::filesystem::path& zip, std::string_view name);
+// The same, reading only the directory and that entry (for big zips).
+std::vector<char> unzip_entry(const std::filesystem::path& zip, std::string_view name);
 
 // Rebuilds an "LSB2" string table with each string passed through `edit`
 // (key, current text) -> new text. Empty result if `table` isn't LSB2.

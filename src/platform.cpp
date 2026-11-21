@@ -1662,6 +1662,9 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID) {
                 g_api.upgrade_preview_stage = api_upgrade_preview_stage;
                 g_api.upgrade_shop_serial = api_upgrade_shop_serial;
                 g_api.is_reloading      = api_is_reloading;
+                g_api.add_shader_hook   = api_add_shader_hook;
+                g_api.read_game_file    = api_read_game_file;
+                g_api.free_game_file    = api_free_game_file;
                 return load_mods(nullptr);
             },
             nullptr, 0, nullptr))

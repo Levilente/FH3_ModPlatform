@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0
+
+- **API 18: graphics.** `add_shader_hook` lets a mod see every shader the game creates (vertex, hull, domain, geometry, pixel, compute), with its DXBC and a stable hash (the container's checksum), and hand back other bytecode for it. The platform hooks the six Create*Shader methods of Azimuth's D3D11.x device inside azimuth.exe (Azimuth 1.0.4, checked by TimeDateStamp and the methods' first bytes; with another Azimuth nothing is hooked and the call returns 0). Nothing is hooked until a mod asks. A replacement Azimuth refuses falls back to the game's own shader, with one line in `platform.log`.
+- **API 18: `read_game_file` / `free_game_file`** read a file as the game ships it under `media`, with the paths of `set_file` (a file inside a zip too). Big zips such as `_library\Shaders.zip` (235 MB) are read by their directory and the one entry, not whole.
+
 ## 1.4.5
 
 - **The ENGINE tab scrolls with the focus.** With more rows than the page has bands (13), the list moves up as the focus goes down, and back as it comes up (the focused row stays on the 10th band; the ends of the list end the scroll; every row counts as two bands, its header and itself). The lists don't use the game's scroll bar list style any more (it kept the focus from moving between the rows).

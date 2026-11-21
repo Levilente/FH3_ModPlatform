@@ -1,6 +1,6 @@
 # API reference
 
-Everything is in [`include/fh3mod.h`](../include/fh3mod.h). This page goes through it member by member. The FH3 Mod Platform 1.4.2 has **API version 17**.
+Everything is in [`include/fh3mod.h`](../include/fh3mod.h). This page goes through it member by member. The FH3 Mod Platform 1.5.0 has **API version 18**.
 
 The platform is a fork of the FH2 Mod Platform, and the API keeps its numbering, so a mod checks `api->api_version` the same way on both. A few parts were written for FH2's menus and files and do nothing in FH3 yet; the table says which.
 
@@ -723,3 +723,23 @@ Wine's dbghelp writes the dumps too; whether it honours the mods' data and added
 ## Controllers other than Xbox pads (platform 1.1.0)
 
 A mod that reads `XInputGetState` itself (from `xinput1_4.dll`, as the example mods do) also sees the PC's other gamepads: the platform reads them (Windows.Gaming.Input RawGameController) and hooks `XInputGetState` for callers that are DLLs in `fh3-mods` (and its own hotkeys). The other pad's buttons are OR-ed into a real XInput pad's, or it shows up as pad 0 when XInput has none. Sony pads use their known layout (Square/Cross/Circle/Triangle as X/A/B/Y, Create/Options as Back/Start); other pads use the usual HID order (A, B, X, Y, LB, RB, Back, Start, LS, RS); the right stick and the triggers are learned from the resting axes. The game and every other caller get XInput's answer unchanged. Nothing to do in a mod. `XInputSetState` (rumble) is not routed to these pads. Settings in `fh3-mods\platform.ini`: `[input] Enabled=0` (all off), `Raw=0` (no controller reader), `Ignore=VVVV:PPPP,...` (hex vendor and product ids to skip).
+
+
+## add_shader_hook (API 18)
+
+```c
+int add_shader_hook(FH3Mod* mod, int (*fn)(void* user, FH3Shader* shader), void* user);
+```
+
+FH3 creates its shaders through Azimuth's D3D11.x device: the material shaders of `media\_library\Shaders.zip` (`*.durango.pso/.vso`) and the post-processing shaders built into the exe. `fn` is called for each one created after the call, before Azimuth translates it to D3D12. `shader->hash` is the DXBC container's own checksum (bytes 4..19), so the same shader always has the same hash; `hash64` is its first 8 bytes as a number. To replace a shader, point `shader->replacement` / `replacement_size` at your DXBC (same stage, same input and output signature) and return 1; the platform copies it. The first hook that returns 1 wins; later ones see `replaced = 1`. If Azimuth refuses the replacement, the game's shader is created instead and `platform.log` says so once per shader.
+
+`fn` runs on the game's render and loading threads: be quick, don't block, don't call into the game. Call `add_shader_hook` from `fh3mod_init`: most shaders are created while the game starts and loads the world. It returns 0 (and logs why) when the shader hooks aren't available: another Azimuth than 1.0.4, or the game not running through `azimuth.exe`.
+
+## read_game_file and free_game_file (API 18)
+
+```c
+void* read_game_file(const char* media_path, size_t* size);
+void free_game_file(void* data);
+```
+
+Reads a file as the game ships it under `game:\media` (never an override), with the paths `set_file` takes: `"renderscenarios/XboxOne/Global.xml"` is `Global.xml` in `media\renderscenarios.zip`. Returns NULL if there's no such file. Give the buffer back with `free_game_file`. Use it to edit a game file before `set_file` without shipping a copy of the game's data.
